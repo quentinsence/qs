@@ -59,7 +59,7 @@ abline(v=sunset$time,col="orange")
 abline(v=talarm0,col="red")
 abline(v=talarm1,col="red")
 axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
-plot(s$V9~s$t,type="l",xlim=c(t0,t1),ylab="pollutants",ylim=c(40,100),xaxt="n");
+plot(s$V9~s$t,type="l",xlim=c(t0,t1),ylab="pollutants",ylim=c(40,max(d$V2[d$t > t0])),xaxt="n");
 lines(d$V2[d$t > t0]~d$t[d$t > t0],col="blue")
 rug(s$V2[s$dt > 310 & s$V2 > t0],ticksize=0.2,col="red")
 rug(s$V2[s$V2 > t0],ticksize=0.1)
