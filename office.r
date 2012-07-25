@@ -1,7 +1,13 @@
 #plot office air
+#add tea times lines
+#tea time distribution density
+#tea time distribution, boxplot by day of week, by hour of day
+#take into account BST when dumping in the 24h bucket
+
 #add quartiles dashed lines
 #realtime LED signal when large gradient in pollution levels
 #resume download rather than reloading the whole file
+#distribution or cdf of max daily temperature with abline v on current day
 
 #### LOAD
 library(RCurl)
@@ -20,6 +26,9 @@ w <- na.omit(w)
 w$time <- w$time + 3600
 #drop ip, only 1 user/collection point for now
 w$ip <- NULL
+
+#dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
+w$time24 <- w$time %%86400
 
 w$time <- as.POSIXct(w$time,origin="1970-01-01")
 t0 <- w$time[1]
@@ -56,7 +65,7 @@ wmaxt <- tapply(w$temperature,w$day,max)
 hotter <- 100 * (1 - ((length(wmaxt[wmaxt >= wmaxt[length(wmaxt)]]) - 1) / dim(wmaxt)))
 cat('today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
 
-cat('hottest day ever',which(wmaxt == max(wmaxt),arr.ind=TRUE),wmaxt[which(wmaxt == max(wmaxt))])
+cat('hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
 
 
 #### PLOT
@@ -68,6 +77,7 @@ circadian(t0,t1)
 plot(w$light ~ w$time,type="l",ylab="light (mV)",xlim=c(t0,t1))
 axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
 circadian(t0,t1)
+abline(v=w$time[w$tea > 0 & w$time > t0],col="green")
 lines(lowess(w$dust ~ w$time,f=0.2),lwd=2)
 plot(w$temperature ~ w$time,type="l",ylab="temperature (C)",xlim=c(t0,t1))
 axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
@@ -76,3 +86,6 @@ plot(w$humidity ~ w$time,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1))
 axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
 circadian(t0,t1)
 
+#tea time distribution in 15 min chunks
+#anything before 7am = artefact, cleaners disrupting sensors
+#hist(w$time24[w$tea >0]/3600,breaks=24*4)
