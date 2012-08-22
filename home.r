@@ -43,7 +43,7 @@ talarm1 <- t1 + s$V7[length(s$V7)]
 #24h before to get previous alarm time, assuming the alarm time has not been changed since
 talarm0 <- talarm1 - 86400
 
-par(mfrow=c(5,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
+par(mfrow=c(6,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
 
 plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
 legend("topleft",legend = paste('last: ',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A")))
