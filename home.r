@@ -1,7 +1,8 @@
 #TODO
 #add ablines for quartiles
-#only get delta of logs when downloading
 #rescale dust and pollutants
+#max cpm and timedate in legend bottom left
+#fix local clock and timezone settings
     
 library(maptools)
 library(maps)
@@ -22,7 +23,6 @@ names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
 
 s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
 d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)
-#must fix clock and timezone settings
 g$t <- as.POSIXct(g$V1+7200,origin="1970-01-01",tz=tz)
 
 s$dt <- c(0,diff(s$V2))
@@ -43,12 +43,12 @@ talarm1 <- t1 + s$V7[length(s$V7)]
 #24h before to get previous alarm time, assuming the alarm time has not been changed since
 talarm0 <- talarm1 - 86400
 
-
+cat('last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
+cat('max:',max(g$V2),'cpm on',strftime(as.POSIXct(g$V1[which(g$V2 == max(g$V2))],origin="1970-01-01"),format="%Y-%m-%d %A %X"),'\n')
 
 par(mfrow=c(6,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
 
 plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
-legend("topleft",legend = paste('last: ',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A")))
 axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M")
 plot(s$V5~s$t,type="l",xlim=c(t0,t1),ylim=c(30,70),ylab="humidity (%Rh)",xaxt="n");
 #missed timestamps
@@ -69,11 +69,11 @@ rug(s$V2[s$dt > 310 & s$V2 > t0],ticksize=0.2,col="red")
 rug(s$V2[s$V2 > t0],ticksize=0.1)
 axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
 plot(g$V2~g$t,xlim=c(t0,t1),ylab="radiation (cpm)",xaxt="n",col="gray");
-lines(lowess(g$V2[g$t > t0]~g$t[g$t > t0]),lwd=2,col="blue")
+lines(lowess(g$V2[g$t > t0]~g$t[g$t > t0],f=0.1),lwd=2,col="blue")
 axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
 ## dust sensor + voc TGS2602 in blue, coming from arduino
 plot(d$V3~d$t,type="l",xlim=c(t0,t1),ylim=c(0,2000),ylab="dust (mV)",xaxt="n",col="gray")
-lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=4,col="blue")
+lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=2,col="blue")
 axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
 #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
 #format.POSIXct(cat(as.POSIXct(s$V2[length(s$V2)],origin="1970-01-01",tz=tz)),format="%c")
