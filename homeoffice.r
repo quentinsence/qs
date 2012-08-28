@@ -38,8 +38,8 @@ d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
 t0 <- s$V2[1]
 t1 <- s$V2[length(s$V2)] - 86400 * 0
 
-#show only last 24 hours
-t0 <- t1 - 86400
+#show only last x days
+t0 <- t1 - 86400 * 1
 #t0 <- t1 - 60000;
 #get last and next alarm time
 talarm1 <- t1 + s$V7[length(s$V7)]
@@ -113,9 +113,16 @@ td$weekday <- strftime(td$day,format="%w")
 #tea time distribution in 15 min chunks
 #hist(w$time24[w$tea > 0]/3600,breaks=24*4)
 
-#hist(wmaxt)
-#abline(v=wmaxt[length(wmaxt)])
-
+op <- par(no.readonly = TRUE);
+plotmaxt <- function() {
+    #plot current office temperature versus all records distribution
+    par(op)
+    par(mfrow=c(2,1),mai=c(0.6,0.5,0.2,0.2),lab=c(10,10,7))
+    hist(wmaxt)
+    abline(v=wmaxt[length(wmaxt)])
+    plot(ecdf(wmaxt),xlab="office temperature")
+    abline(v=wmaxt[length(wmaxt)])
+}
 
 par(mfrow=c(10,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
 
