@@ -1,20 +1,31 @@
 #TODO
+#set data processing out of functions
+
 #adjust times between office and home
-#add KCL pollution feeds
+#fix local clock and timezone settings
 #only display radiation time series when event detected
 
 #add ablines for quartiles
 #rescale dust and pollutants
-#fix local clock and timezone settings
+
     
 library(maptools)
 library(maps)
 library(RCurl)
+library(openair)
 data(world.cities)
 
+op <- par(no.readonly = TRUE);
+
 plotqs <- function (days=1) {
-    #local config
-    source("local.r")
+    
+    #wait at least 5 min between each data files update requests
+    if(!exists("now") || as.numeric(Sys.time()) - now > 300) {
+        #local config
+        source("local.r")
+        k <- importKCL(site=site,met=TRUE,year=2012)
+    }
+    now <- as.numeric(Sys.time())
     
     ##########
     s <- read.csv("logs.csv",header=FALSE)
@@ -98,9 +109,9 @@ plotqs <- function (days=1) {
     #tea time distribution in 15 min chunks
     #hist(w$time24[w$tea > 0]/3600,breaks=24*4)
     
-    op <- par(no.readonly = TRUE);
+
     
-    par(mfrow=c(10,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
+    par(mfrow=c(12,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
     
     plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M")
@@ -145,6 +156,13 @@ plotqs <- function (days=1) {
     plot(w$humidity ~ w$time,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1),ylim=c(min(w$humidity[w$time > t0]),max(w$humidity[w$time > t0])))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
+    #KCL air quality feeds may have at least a 24h delay for data curation
+    if(k$date[length(k$date)] > t0) {
+        plot(k$pm10 ~ k$date,type="l",ylab=paste(site,"pm10 (C)"),xlim=c(t0,t1),ylim=c(min(k$pm10[k$date > t0 & k$pm10 != "NaN"]),max(k$pm10[k$date > t0 & k$pm10 != "NaN"])))
+        axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
+        plot(k$pm25 ~ k$date,type="l",ylab=paste(site,"pressure (mbar)"),xlim=c(t0,t1),ylim=c(min(k$pm25[k$date > t0 & k$pm25 != "NaN"]),max(k$pm25[k$date > t0 & k$pm25 != "NaN"])))
+        #axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
+    }
 }
 
 circadian <- function(t0,t1) {
