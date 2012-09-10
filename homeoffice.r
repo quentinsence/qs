@@ -26,79 +26,59 @@ plotqs <- function (days=1) {
         k <- importKCL(site=site,met=TRUE,year=2012)
     }
     now <- as.numeric(Sys.time())
-    
-    ##########
+
+    #home
     s <- read.csv("logs.csv",header=FALSE)
-    #g <- read.csv("co2.csv",header=FALSE)
+    #home dust
     d <- read.csv("dust.csv",header=FALSE)
+    #home geiger
     g <- read.csv("cpm.geiger.csv",header=FALSE)
+    #work
+    w <- na.omit(read.csv("wth.txt"))
     
     names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
-    #s$V1 <- NULL
     
+    #stored as UTC, change to local tz
     s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
-    d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)
-    g$t <- as.POSIXct(g$V1+7200,origin="1970-01-01",tz=tz)
+    d$t <- as.POSIXct(d$V1+3600,origin="1970-01-01",tz=tz)    
+    
+    g$t <- as.POSIXct(g$V1+7200,origin="1970-01-01",tz=tz)  
+    w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
     
     s$dt <- c(0,diff(s$V2))
     
     #adjust for arduino clock inaccuracies, both feeds were picked at the same time so last timestamp should be identical in both feeds
-    #g$t <- g$t + s$V2[length(s$V2)] - g$V1[length(g$V1)]
     d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
     
-    #s$V2 <- s$V2 - 3600;
-    t0 <- s$V2[1]
-    t1 <- s$V2[length(s$V2)] - 86400 * 0
-    
-    #show only last x days
-    t0 <- t1 - 86400 * 1
-    #t0 <- t1 - 60000;
-    #get last and next alarm time
-    talarm1 <- t1 + s$V7[length(s$V7)]
-    #24h before to get previous alarm time, assuming the alarm time has not been changed since
-    talarm0 <- talarm1 - 86400
-    
-    cat('home last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
-    cat('radiation max:',max(g$V2),'cpm on',strftime(as.POSIXct(g$V1[which(g$V2 == max(g$V2))],origin="1970-01-01"),format="%Y-%m-%d %A %X"),'\n')
-    cat('mean radiation last 24h:',mean(g$V2[g$t > t0]),'cpm\n')
-    
-    w <- na.omit(read.csv("wth.txt"))
-    
-    #stored as UTC, switch to BST
-    w$time <- w$time + 3600
-    #drop ip, only 1 user/collection point for now
+
+    #drop IP address, only 1 user/collection point for now
     w$ip <- NULL
     
     #dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
     w$time24 <- w$time %%86400
     
-    w$time <- as.POSIXct(w$time,origin="1970-01-01")
-    w$weekday <- format.POSIXct(w$time,format="%w")
+    w$weekday <- format.POSIXct(w$t,format="%w")
     sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
     
     #remove tea cups before 7:30am = artefacts, morning cleaners are disrupting sensors
     w$tea[w$time24 < 7.5*3600] <- 0
     
-    #boundaries to display only the last 24 hours
-    t0 <- w$time[1]
-    t1 <- w$time[length(w$time)]
+    #boundaries to display only the last 24 hours * days
+    t0 <- w$t[1]
+    t1 <- w$t[length(w$time)]
     t0 <- t1 - 86400 * days
     #t0 <- as.POSIXct(paste(substr(t1,1,10),"00:00:00"))
-    #t1 <- t0 + 86400
     
-    #t0 <- t0 - 86400
-    #t1 <- t1 - 86500
-    
-    
+    #get last and next alarm time
+    talarm1 <- t1 + s$V7[length(s$V7)]
+    #24h before to get previous alarm time, assuming the alarm time has not been changed since
+    talarm0 <- talarm1 - 86400    
     #calculate daily maximum temperatures
-    w$day <- as.Date(w$time)
+    w$day <- as.Date(w$t,origin="1970-01-01")
     wmaxt <- tapply(w$temperature,w$day,max)
     # max(wmaxt)
     #percentage of days colder than today
     hotter <- 100 * (1 - ((length(wmaxt[wmaxt >= wmaxt[length(wmaxt)]]) - 1) / dim(wmaxt)))
-    cat('office today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
-    
-    cat('office hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
     
     #should use subset to count only teas after 7am
     td <- aggregate(w$tea[w$time24 > 7*3600],list(w$day[w$time24 > 7*3600]),sum)
@@ -109,7 +89,13 @@ plotqs <- function (days=1) {
     #tea time distribution in 15 min chunks
     #hist(w$time24[w$tea > 0]/3600,breaks=24*4)
     
-
+    
+    cat('home last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
+    cat('radiation max:',max(g$V2),'cpm on',strftime(as.POSIXct(g$V1[which(g$V2 == max(g$V2))],origin="1970-01-01"),format="%Y-%m-%d %A %X"),'\n')
+    cat('mean radiation last 24h:',mean(g$V2[g$t > t0]),'cpm\n')    
+    cat('office today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
+    cat('office hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
+    
     
     par(mfrow=c(12,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
     
@@ -142,18 +128,18 @@ plotqs <- function (days=1) {
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
     #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
     #format.POSIXct(cat(as.POSIXct(s$V2[length(s$V2)],origin="1970-01-01",tz=tz)),format="%c")
-    plot(w$gas ~ w$time,type="l",xlim=c(t0,t1),ylim=c(min(w$gas[w$time > t0]),max(w$gas[w$time > t0])),ylab="VOCs (mV)",xaxt="n")
+    plot(w$gas ~ w$t,type="l",xlim=c(t0,t1),ylim=c(min(w$gas[w$t > t0]),max(w$gas[w$t > t0])),ylab="VOCs (mV)",xaxt="n")
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
-    plot(w$light ~ w$time,type="l",ylab="light (mV)",xlim=c(t0,t1))
+    plot(w$light ~ w$t,type="l",ylab="light (mV)",xlim=c(t0,t1))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
-    abline(v=w$time[w$tea > 0 & w$time > t0],col="green")
-    lines(lowess(w$dust ~ w$time,f=0.2),lwd=2)
-    plot(w$temperature ~ w$time,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$time > t0]),max(w$temperature[w$time > t0])))
+    abline(v=w$t[w$tea > 0 & w$t > t0],col="green")
+    #lines(lowess(w$dust ~ w$t,f=0.2),lwd=2)
+    plot(w$temperature ~ w$t,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$t > t0]),max(w$temperature[w$t > t0])))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
-    plot(w$humidity ~ w$time,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1),ylim=c(min(w$humidity[w$time > t0]),max(w$humidity[w$time > t0])))
+    plot(w$humidity ~ w$t,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1),ylim=c(min(w$humidity[w$time > t0]),max(w$humidity[w$t > t0])))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
     #KCL air quality feeds may have at least a 24h delay for data curation
