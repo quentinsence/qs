@@ -59,7 +59,7 @@ plotqs <- function (days=1) {
     w$ip <- NULL
     
     #dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
-    w$time24 <- w$time %%86400
+    w$time24 <- (w$time+3600) %%86400
     
     w$weekday <- format.POSIXct(w$t,format="%w")
     sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
