@@ -17,83 +17,85 @@ data(world.cities)
 
 op <- par(no.readonly = TRUE);
 
+#wait at least 5 min between each data files update requests
+if(!exists("now") || as.numeric(Sys.time()) - now > 300) {
+  #local config
+  source("local.r")
+  k <- importKCL(site=site,met=TRUE,year=2012)
+}
+now <- as.numeric(Sys.time())
+
+#home
+s <- read.csv("logs.csv",header=FALSE)
+#home dust
+d <- read.csv("dust.csv",header=FALSE)
+#home geiger
+g <- read.csv("cpm.geiger.csv",header=FALSE)
+#work
+w <- na.omit(read.csv("wth.txt"))
+
+#cleanup bogus timestamps above last entry
+d[which(d$V1 > d$V1[length(d$V1)]),] <- NA
+d <- na.omit(d)
+
+names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
+
+#stored as UTC, change to local tz
+s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
+d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
+
+g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
+w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
+
+s$dt <- c(0,diff(s$V2))
+
+#adjust for arduino clock inaccuracies, both feeds were picked at the same time so last timestamp should be identical in both feeds
+d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
+
+
+#drop IP address, only 1 user/collection point for now
+w$ip <- NULL
+
+#dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
+w$time24 <- (w$time+3600) %%86400
+
+w$weekday <- format.POSIXct(w$t,format="%w")
+sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
+
+#remove tea cups before 7:30am = artefacts, morning cleaners are disrupting sensors
+w$tea[w$time24 < 7.5*3600] <- 0
+
+#boundaries to display only the last 24 hours * days
+t0 <- w$t[1]
+t1 <- w$t[length(w$time)]
+t0 <- t1 - 86400 * 1
+#t0 <- as.POSIXct(paste(substr(t1,1,10),"00:00:00"))
+
+#get last and next alarm time
+talarm1 <- t1 + s$V7[length(s$V7)]
+#24h before to get previous alarm time, assuming the alarm time has not been changed since
+talarm0 <- talarm1 - 86400    
+#calculate daily maximum temperatures
+w$day <- as.Date(w$t,origin="1970-01-01")
+wmaxt <- tapply(w$temperature,w$day,max)
+# max(wmaxt)
+#percentage of days colder than today
+hotter <- 100 * (1 - ((length(wmaxt[wmaxt >= wmaxt[length(wmaxt)]]) - 1) / dim(wmaxt)))
+
+#should use subset to count only teas after 7am
+td <- aggregate(w$tea[w$time24 > 7*3600],list(w$day[w$time24 > 7*3600]),sum)
+names(td) <- c('day','tea')
+td$weekday <- strftime(td$day,format="%w")
+##EXTRA PLOTS
+#boxplot(td$tea ~ td$weekday,names=sweekday,ylab="number of teas (250ml)",main="number of tea cups by day of the week")
+#tea time distribution in 15 min chunks
+#hist(w$time24[w$tea > 0]/3600,breaks=24*4)
+
+
 plotqs <- function (days=1) {
     
-    #wait at least 5 min between each data files update requests
-    if(!exists("now") || as.numeric(Sys.time()) - now > 300) {
-        #local config
-        source("local.r")
-        k <- importKCL(site=site,met=TRUE,year=2012)
-    }
-    now <- as.numeric(Sys.time())
-
-    #home
-    s <- read.csv("logs.csv",header=FALSE)
-    #home dust
-    d <- read.csv("dust.csv",header=FALSE)
-    #home geiger
-    g <- read.csv("cpm.geiger.csv",header=FALSE)
-    #work
-    w <- na.omit(read.csv("wth.txt"))
-    
-    #cleanup bogus timestamps above last entry
-    d[which(d$V1 > d$V1[length(d$V1)]),] <- NA
-    d <- na.omit(d)
-    
-    names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
-    
-    #stored as UTC, change to local tz
-    s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
-    d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
-    
-    g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
-    w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
-    
-    s$dt <- c(0,diff(s$V2))
-    
-    #adjust for arduino clock inaccuracies, both feeds were picked at the same time so last timestamp should be identical in both feeds
-    d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
-    
-
-    #drop IP address, only 1 user/collection point for now
-    w$ip <- NULL
-    
-    #dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
-    w$time24 <- (w$time+3600) %%86400
-    
-    w$weekday <- format.POSIXct(w$t,format="%w")
-    sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
-    
-    #remove tea cups before 7:30am = artefacts, morning cleaners are disrupting sensors
-    w$tea[w$time24 < 7.5*3600] <- 0
-    
-    #boundaries to display only the last 24 hours * days
-    t0 <- w$t[1]
-    t1 <- w$t[length(w$time)]
     t0 <- t1 - 86400 * days
-    #t0 <- as.POSIXct(paste(substr(t1,1,10),"00:00:00"))
-    
-    #get last and next alarm time
-    talarm1 <- t1 + s$V7[length(s$V7)]
-    #24h before to get previous alarm time, assuming the alarm time has not been changed since
-    talarm0 <- talarm1 - 86400    
-    #calculate daily maximum temperatures
-    w$day <- as.Date(w$t,origin="1970-01-01")
-    wmaxt <- tapply(w$temperature,w$day,max)
-    # max(wmaxt)
-    #percentage of days colder than today
-    hotter <- 100 * (1 - ((length(wmaxt[wmaxt >= wmaxt[length(wmaxt)]]) - 1) / dim(wmaxt)))
-    
-    #should use subset to count only teas after 7am
-    td <- aggregate(w$tea[w$time24 > 7*3600],list(w$day[w$time24 > 7*3600]),sum)
-    names(td) <- c('day','tea')
-    td$weekday <- strftime(td$day,format="%w")
-    ##EXTRA PLOTS
-    #boxplot(td$tea ~ td$weekday,names=sweekday,ylab="number of teas (250ml)",main="number of tea cups by day of the week")
-    #tea time distribution in 15 min chunks
-    #hist(w$time24[w$tea > 0]/3600,breaks=24*4)
-    
-    
+  
     cat('home last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
     cat('radiation max:',max(g$V2),'cpm on',strftime(as.POSIXct(g$V1[which(g$V2 == max(g$V2))],origin="1970-01-01"),format="%Y-%m-%d %A %X"),'\n')
     cat('mean radiation last 24h:',mean(g$V2[g$t > t0]),'cpm\n')    
