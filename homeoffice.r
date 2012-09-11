@@ -36,13 +36,17 @@ plotqs <- function (days=1) {
     #work
     w <- na.omit(read.csv("wth.txt"))
     
+    #cleanup bogus timestamps above last entry
+    d[which(d$V1 > d$V1[length(d$V1)]),] <- NA
+    d <- na.omit(d)
+    
     names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
     
     #stored as UTC, change to local tz
     s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
-    d$t <- as.POSIXct(d$V1+3600,origin="1970-01-01",tz=tz)    
+    d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
     
-    g$t <- as.POSIXct(g$V1+7200,origin="1970-01-01",tz=tz)  
+    g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
     w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
     
     s$dt <- c(0,diff(s$V2))
