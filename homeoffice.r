@@ -101,9 +101,16 @@ plotqs <- function (days=1) {
     cat('mean radiation last 24h:',mean(g$V2[g$t > t0]),'cpm\n')    
     cat('office today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
     cat('office hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
-    
-    
-    par(mfrow=c(12,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
+
+    chans <- 9
+    if(k$date[length(k$date)] > t0) {
+      chans <- chans + 2
+    }
+    #plot radiation only if rare event detected
+    if( max(g$V2[g$t > t0]) > 35 )  {
+      chans <- chans + 1
+    }
+    par(mfrow=c(chans,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
     
     plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M")
@@ -125,9 +132,11 @@ plotqs <- function (days=1) {
     rug(s$V2[s$dt > 310 & s$V2 > t0],ticksize=0.2,col="red")
     rug(s$V2[s$V2 > t0],ticksize=0.1)
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
-    plot(g$V2~g$t,xlim=c(t0,t1),ylab="radiation (cpm)",xaxt="n",col="gray");
-    lines(lowess(g$V2[g$t > t0]~g$t[g$t > t0],f=0.1),lwd=2,col="blue")
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
+    if( max(g$V2[g$t > t0]) > 35 )  {
+      plot(g$V2~g$t,xlim=c(t0,t1),ylab="radiation (cpm)",xaxt="n",col="gray");
+      lines(lowess(g$V2[g$t > t0]~g$t[g$t > t0],f=0.1),lwd=2,col="blue")
+      axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
+    }
     ## dust sensor + voc TGS2602 in blue, coming from arduino
     plot(d$V3~d$t,type="l",xlim=c(t0,t1),ylim=c(0,2000),ylab="dust (mV)",xaxt="n",col="gray")
     lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=2,col="blue")
