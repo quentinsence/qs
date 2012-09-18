@@ -102,7 +102,7 @@ plotqs <- function (days=1) {
     cat('office today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
     cat('office hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
 
-    chans <- 9
+    chans <- 10
     if(k$date[length(k$date)] > t0) {
       chans <- chans + 2
     }
@@ -150,6 +150,9 @@ plotqs <- function (days=1) {
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
     circadian(t0,t1)
     abline(v=w$t[w$tea > 0 & w$t > t0],col="green")
+    plot(w$tgsgas ~ w$t,type="l",ylab="VOC TGS (mV)",xlim=c(t0,t1))
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
+    circadian(t0,t1)
     #lines(lowess(w$dust ~ w$t,f=0.2),lwd=2)
     plot(w$temperature ~ w$t,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$t > t0]),max(w$temperature[w$t > t0])))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
