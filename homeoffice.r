@@ -67,6 +67,7 @@ w$tea[w$time24 < 7.5*3600] <- 0
 
 #boundaries to display only the last 24 hours * days
 t0 <- w$t[1]
+#set the upper time limit to the most up to date feed
 t1 <- max(w$t[length(w$time)],s$t[length(s$t)])
 t0 <- t1 - 86400 * 1
 #t0 <- as.POSIXct(paste(substr(t1,1,10),"00:00:00"))
@@ -117,10 +118,10 @@ plotqs <- function (days=1) {
     par(mfrow=c(chans,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
     
     plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M")
     plot(s$V5~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V5[s$t>t0]),max(s$V5[s$t>t0])),ylab="humidity (%Rh)",xaxt="n");
     #missed timestamps
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     plot(s$V6~s$t,type="l",xlim=c(t0,t1),ylab="light",xaxt="n");
     rug(s$V2[s$V3 == 0 & s$V2 > t0],ticksize=0.1,col="blue")
     #add sunrise and sunset
@@ -130,32 +131,32 @@ plotqs <- function (days=1) {
     abline(v=sunset$time,col="orange")
     abline(v=talarm0,col="red")
     abline(v=talarm1,col="red")
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     plot(s$V9~s$t,type="l",xlim=c(t0,t1),ylab="pollutants",ylim=c(min(s$V9[s$t > t0]),max(s$V9[s$t > t0])),xaxt="n");
     #lines(d$V2[d$t > t0]~d$t[d$t > t0],col="blue")
     rug(s$V2[s$dt > 310 & s$V2 > t0],ticksize=0.2,col="red")
     rug(s$V2[s$V2 > t0],ticksize=0.1,col="grey")
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     if( max(g$V2[g$t > t0]) > 35 )  {
       plot(g$V2~g$t,xlim=c(t0,t1),ylab="radiation (cpm)",xaxt="n",col="gray");
       lines(lowess(g$V2[g$t > t0]~g$t[g$t > t0],f=0.1),lwd=2,col="blue")
-      axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
+      axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     }
     ## dust sensor + voc TGS2602 in blue, coming from arduino
     plot(d$V3~d$t,type="l",xlim=c(t0,t1),ylim=c(0,2000),ylab="dust (mV)",xaxt="n",col="gray")
     lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=2,col="blue")
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
-    #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
+    #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     #format.POSIXct(cat(as.POSIXct(s$V2[length(s$V2)],origin="1970-01-01",tz=tz)),format="%c")
     plot(w$gas ~ w$t,type="l",xlim=c(t0,t1),ylim=c(min(w$gas[w$t > t0]),max(w$gas[w$t > t0])),ylab="VOCs (mV)",xaxt="n")
-    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     plot(w$light ~ w$t,type="l",ylab="light (mV)",xlim=c(t0,t1))
-    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     abline(v=w$t[w$tea > 0 & w$t > t0],col="green")
     plot(w$tgsgas ~ w$t,type="l",ylab="VOC TGS (mV)",xlim=c(t0,t1))
-    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     #lines(lowess(w$dust ~ w$t,f=0.2),lwd=2)
     plot(w$temperature ~ w$t,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$t > t0]),max(w$temperature[w$t > t0])))
@@ -163,10 +164,10 @@ plotqs <- function (days=1) {
     abline(h=24.5,col="grey",lty=3)
     #office feels hot above that threshold
     abline(h=26,col="grey",lty=3)
-    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     plot(w$humidity ~ w$t,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1),ylim=c(min(w$humidity[w$time > t0]),max(w$humidity[w$t > t0])))
-    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col="grey",col.axis="grey")
+    axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     #KCL air quality feeds may have at least a 24h delay for data curation
     if(k$date[length(k$date)] > t0) {
