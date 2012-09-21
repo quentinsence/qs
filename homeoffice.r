@@ -67,7 +67,7 @@ w$tea[w$time24 < 7.5*3600] <- 0
 
 #boundaries to display only the last 24 hours * days
 t0 <- w$t[1]
-t1 <- w$t[length(w$time)]
+t1 <- max(w$t[length(w$time)],s$t[length(s$t)])
 t0 <- t1 - 86400 * 1
 #t0 <- as.POSIXct(paste(substr(t1,1,10),"00:00:00"))
 
