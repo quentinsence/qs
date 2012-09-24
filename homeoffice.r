@@ -79,6 +79,17 @@ talarm0 <- talarm1 - 86400
 #calculate daily maximum temperatures
 w$day <- as.Date(w$t,origin="1970-01-01")
 wmaxt <- tapply(w$temperature,w$day,max)
+
+sdays <- as.Date(s$t,origin="1970-01-01")
+dt <- cbind( tapply(s$V4,sdays,mean)
+            ,tapply(s$V5,sdays,mean)
+            ,tapply(s$V6,sdays,mean)
+            ,tapply(s$V9,sdays,mean)
+            )
+
+#dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
+
+
 # max(wmaxt)
 #percentage of days colder than today
 hotter <- 100 * (1 - ((length(wmaxt[wmaxt >= wmaxt[length(wmaxt)]]) - 1) / dim(wmaxt)))
@@ -161,9 +172,9 @@ plotqs <- function (days=1) {
     #lines(lowess(w$dust ~ w$t,f=0.2),lwd=2)
     plot(w$temperature ~ w$t,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$t > t0]),max(w$temperature[w$t > t0])))
     #office feels cold below that threshold
-    abline(h=24.5,col="grey",lty=3)
+    abline(h=23.5,col="grey",lty=3)
     #office feels hot above that threshold
-    abline(h=26,col="grey",lty=3)
+    abline(h=25,col="grey",lty=3)
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     plot(w$humidity ~ w$t,type="l",ylab="humidity (%Rh)",xlim=c(t0,t1),ylim=c(min(w$humidity[w$time > t0]),max(w$humidity[w$t > t0])))
