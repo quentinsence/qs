@@ -1,9 +1,7 @@
 #TODO
-#set data processing out of functions
 
-#adjust times between office and home
-#fix local clock and timezone settings
-#only display radiation time series when event detected
+#adjust time at home to UTC
+#fix local clock and timezone settings: BST unknown
 
 #add ablines for quartiles
 #rescale dust and pollutants
@@ -40,7 +38,7 @@ d <- na.omit(d)
 
 names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
 
-#stored as UTC, change to local tz
+#stored as UTC, change to local timezone tz
 s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
 d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
 
@@ -57,7 +55,7 @@ d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
 w$ip <- NULL
 
 #dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
-w$time24 <- (w$time+3600) %%86400
+w$time24 <- (w$time+3600) %% 86400
 
 w$weekday <- format.POSIXct(w$t,format="%w")
 sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
@@ -112,14 +110,16 @@ plotqs <- function (days=1) {
     
     t0 <- t1 - 86400 * days
   
-    cat('home last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
+    cat('\n\nhome last entry:',strftime(as.POSIXct(t1,origin="1970-01-01"),format="%Y-%m-%d %A"),'\n')
     cat('radiation max:',max(g$V2),'cpm on',strftime(as.POSIXct(g$V1[which(g$V2 == max(g$V2))],origin="1970-01-01"),format="%Y-%m-%d %A %X"),'\n')
     cat('mean radiation last 24h:',mean(g$V2[g$t > t0]),'cpm\n')    
     cat('office today is hotter than',hotter,'% of the days since office move',dim(wmaxt),'days ago\n')
     cat('office hottest day ever:',names(wmaxt[which(wmaxt == max(wmaxt),arr.ind=TRUE)]),'at',wmaxt[which(wmaxt == max(wmaxt))],'C')
-
+    cat('\n\n')
+    
     chans <- 10
-    if(k$date[length(k$date)] > t0) {
+    #if we have KCL pollution data less than 1/2 day old then display it too
+    if(k$date[length(k$date)] > t1 - 86400/2) {
       chans <- chans + 2
     }
     #plot radiation only if rare event detected
@@ -129,7 +129,7 @@ plotqs <- function (days=1) {
     par(mfrow=c(chans,1),mai=c(0,0.8,0,0),lab=c(10,10,7));
     
     plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M",col.axis="grey")
     plot(s$V5~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V5[s$t>t0]),max(s$V5[s$t>t0])),ylab="humidity (%Rh)",xaxt="n");
     #missed timestamps
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
@@ -156,7 +156,7 @@ plotqs <- function (days=1) {
     ## dust sensor + voc TGS2602 in blue, coming from arduino
     plot(d$V3~d$t,type="l",xlim=c(t0,t1),ylim=c(0,2000),ylab="dust (mV)",xaxt="n",col="gray")
     lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=2,col="blue")
-    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
+    axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
     #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     #format.POSIXct(cat(as.POSIXct(s$V2[length(s$V2)],origin="1970-01-01",tz=tz)),format="%c")
     plot(w$gas ~ w$t,type="l",xlim=c(t0,t1),ylim=c(min(w$gas[w$t > t0]),max(w$gas[w$t > t0])),ylab="VOCs (mV)",xaxt="n")
@@ -166,13 +166,13 @@ plotqs <- function (days=1) {
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     abline(v=w$t[w$tea > 0 & w$t > t0],col="green")
-    plot(w$tgsgas ~ w$t,type="l",ylab="VOC TGS (mV)",xlim=c(t0,t1))
+    plot(w$tgsgas ~ w$t,type="l",ylab="VOC TGS (mV)",xlim=c(t0,t1),ylim=c(min(w$tgsgas[w$t > t0]),max(w$tgsgas[w$t > t0])))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     #lines(lowess(w$dust ~ w$t,f=0.2),lwd=2)
     plot(w$temperature ~ w$t,type="l",ylab="temperature (C)",xlim=c(t0,t1),ylim=c(min(w$temperature[w$t > t0]),max(w$temperature[w$t > t0])))
     #office feels cold below that threshold
-    abline(h=23.5,col="grey",lty=3)
+    abline(h=24,col="grey",lty=3)
     #office feels hot above that threshold
     abline(h=25,col="grey",lty=3)
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
@@ -181,7 +181,7 @@ plotqs <- function (days=1) {
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     #KCL air quality feeds may have at least a 24h delay for data curation
-    if(k$date[length(k$date)] > t0) {
+    if(k$date[length(k$date)] > t1 - 86400/2) {
         plot(k$pm10 ~ k$date,type="l",ylab=paste(site,"pm10 (C)"),xlim=c(t0,t1),ylim=c(min(k$pm10[k$date > t0 & k$pm10 != "NaN"]),max(k$pm10[k$date > t0 & k$pm10 != "NaN"])))
         axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M")
         plot(k$pm25 ~ k$date,type="l",ylab=paste(site,"pressure (mbar)"),xlim=c(t0,t1),ylim=c(min(k$pm25[k$date > t0 & k$pm25 != "NaN"]),max(k$pm25[k$date > t0 & k$pm25 != "NaN"])))
