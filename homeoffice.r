@@ -31,6 +31,8 @@ d <- read.csv("dust.csv",header=FALSE)
 g <- read.csv("cpm.geiger.csv",header=FALSE)
 #work
 w <- na.omit(read.csv("wth.txt"))
+#brainworkshop
+b <- read.csv("stats.txt",header=FALSE)
 
 #cleanup bogus timestamps above last entry
 d[which(d$V1 > d$V1[length(d$V1)]),] <- NA
@@ -79,12 +81,21 @@ w$day <- as.Date(w$t,origin="1970-01-01")
 wmaxt <- tapply(w$temperature,w$day,max)
 
 sdays <- as.Date(s$t,origin="1970-01-01")
-dt <- cbind( tapply(s$V4,sdays,mean)
-            ,tapply(s$V5,sdays,mean)
-            ,tapply(s$V6,sdays,mean)
-            ,tapply(s$V9,sdays,mean)
-            )
+dt <- data.frame( unique(sdays)
+                  ,tapply(s$V4,sdays,mean)
+                  ,tapply(s$V5,sdays,mean)
+                  ,tapply(s$V6,sdays,mean)
+                  ,tapply(s$V9,sdays,mean)
+                )
+names(dt) <-c('date','temperature','humidity','light','gas')
 
+gdays <- as.Date(g$t,origin="1970-01-01")
+dt2 <- data.frame( unique(gdays)
+                   ,tapply(g$V2,gdays,mean)
+                 )
+names(dt2) <- c('date','radiation')
+
+dtt <- merge(dt,dt2,by.x='date',all.x=TRUE)
 #dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
 
 
