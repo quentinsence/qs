@@ -81,21 +81,38 @@ w$day <- as.Date(w$t,origin="1970-01-01")
 wmaxt <- tapply(w$temperature,w$day,max)
 
 sdays <- as.Date(s$t,origin="1970-01-01")
-dt <- data.frame( unique(sdays)
+ds <- data.frame( unique(sdays)
                   ,tapply(s$V4,sdays,mean)
                   ,tapply(s$V5,sdays,mean)
                   ,tapply(s$V6,sdays,mean)
                   ,tapply(s$V9,sdays,mean)
                 )
-names(dt) <-c('date','temperature','humidity','light','gas')
+names(ds) <-c('date','temperature','humidity','light','gas')
 
 gdays <- as.Date(g$t,origin="1970-01-01")
-dt2 <- data.frame( unique(gdays)
-                   ,tapply(g$V2,gdays,mean)
+dg <- data.frame( unique(gdays)
+                  ,tapply(g$V2,gdays,mean)
                  )
-names(dt2) <- c('date','radiation')
+names(dg) <- c('date','radiation')
 
-dtt <- merge(dt,dt2,by.x='date',all.x=TRUE)
+ddays <- as.Date(d$t,origin="1970-01-01")
+dd <- data.frame( unique(ddays)
+                  ,tapply(d$V3,ddays,mean)
+                )
+names(dd) <- c('date','dust')
+
+wdays <- as.Date(w$time,origin="1970-01-01")
+dw <- data.frame( unique(wdays)
+                  ,tapply(w$temperature,wdays,mean)
+                  ,tapply(w$humidity,wdays,mean)
+                  ,tapply(w$tgsgas,wdays,mean)
+                  ,tapply(w$tea,wdays,sum)
+                )
+
+dtt <- merge(ds ,dg,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,dd,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,dw,by.x='date',all.x=TRUE)
+
 #dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
 
 
@@ -226,3 +243,4 @@ plotmaxt <- function() {
     plot(ecdf(wmaxt),xlab="office temperature")
     abline(v=wmaxt[length(wmaxt)])
 }
+
