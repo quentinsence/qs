@@ -55,7 +55,13 @@ d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)
 g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
 w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
 
+#time between each entry
 s$dt <- c(0,diff(s$V2))
+#light difference, spot turning off lights
+s$dl <- c(rep(0,2),diff(s$V6,lag=2))
+
+s$t24 <- s$V2 %% 86400
+ttb <- subset(s,dl< -300)
 
 #adjust for arduino clock inaccuracies, both feeds were picked at the same time so last timestamp should be identical in both feeds
 d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
@@ -143,6 +149,8 @@ dtt <- merge(dtt,wi,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dbp,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dkb,by.x='date',all.x=TRUE)
 
+dtt$wday <- strftime(dtt$date,format="%w")
+
 #dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
 
 
@@ -159,6 +167,12 @@ td$weekday <- strftime(td$day,format="%w")
 #tea time distribution in 15 min chunks
 #hist(w$time24[w$tea > 0]/3600,breaks=24*4)
 
+plotwqs <- function () {
+  par(mfrow=c(2,9),mai=c(0,0.4,0,0),lab=c(10,10,7));
+  for (i in 2:dim(dtt)[2]-1) {
+    boxplot(dtt[,i]~dtt$wday,xlab="days of the week",main=names(dtt)[i])
+  }
+}
 plotdqs <- function (months=1) {
     t0 <- t1 - 86400 * 30 * months
     
