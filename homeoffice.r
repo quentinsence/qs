@@ -1,5 +1,7 @@
 #TODO
 
+#day dataframe: add commute time, emwave
+
 #adjust time at home to UTC
 #fix local clock and timezone settings: BST unknown
 
@@ -33,6 +35,12 @@ g <- read.csv("cpm.geiger.csv",header=FALSE)
 w <- na.omit(read.csv("wth.txt"))
 #brainworkshop
 b <- read.csv("stats.txt",header=FALSE)
+#withings scale
+wi <- read.csv("withings.csv",header=FALSE)
+#blood pressure
+bp <- read.table("bpm.cma")
+#kettlebell
+kb <- read.csv("workout.csv")
 
 #cleanup bogus timestamps above last entry
 d[which(d$V1 > d$V1[length(d$V1)]),] <- NA
@@ -109,9 +117,31 @@ dw <- data.frame( unique(w$day)
                 )
 names(dw) <- c('date','w.temperature','w.humidity','w.gas','tea')
 
+b$date <- as.Date(b$V1,origin="1970-01-01")
+db <- data.frame( unique(b$date)
+                  ,tapply(b$V5,b$date,max)
+                  ,tapply(b$V9,b$date,max)
+                )
+names(db) <- c('date','dbmax','sessions')
+
+wi$V1 <- as.Date(as.POSIXct(wi$V1,origin="1970-01-01"))
+names(wi) <- c('date','weight')
+
+dbp <- data.frame( as.Date(as.POSIXct(bp$V1,format="%d/%m/%Y")),bp$V4, bp$V6, bp$V8)
+names(dbp) <- c('date','systolic','diastolic','pulse')
+
+kb <- subset(kb,reps!="rested")
+kbdays <- as.Date(as.POSIXct(kb$time,origin="1970-01-01"))
+dkb <- data.frame( unique(kbdays),tapply(as.numeric(kb$reps),kbdays,sum) )
+names(dkb) <- c('date','reps')
+
 dtt <- merge(ds ,dg,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dd,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dw,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,db,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,wi,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,dbp,by.x='date',all.x=TRUE)
+dtt <- merge(dtt,dkb,by.x='date',all.x=TRUE)
 
 #dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
 
