@@ -149,8 +149,9 @@ dtt <- merge(dtt,wi,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dbp,by.x='date',all.x=TRUE)
 dtt <- merge(dtt,dkb,by.x='date',all.x=TRUE)
 
-dtt$wday <- strftime(dtt$date,format="%w")
-
+dtt$wday <- factor( strftime(dtt$date,format="%w")
+                    ,levels=0:6
+                    ,labels=c('Sun','Mon','Tue','Wed','Thu','Fri','Sat'))
 #dtt <- merge(dt,tapply(g$V2,as.Date(g$t,origin="1970-01-01"),mean))
 
 
