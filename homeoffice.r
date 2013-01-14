@@ -71,7 +71,7 @@ d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
 w$ip <- NULL
 
 #dump everything in a 24h period from 0 to 86400 seconds for hourly/time of day stats
-w$time24 <- (w$time+3600) %% 86400
+w$time24 <- (w$time+0*3600) %% 86400
 
 w$weekday <- format.POSIXct(w$t,format="%w")
 sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
@@ -202,10 +202,11 @@ plotqs <- function (days=1) {
     
     plot(s$V4~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V4[s$t>t0]),max(s$V4[s$t>t0])),ylab="temp (C)",xaxt="n");
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),by="hour"),format="%H:%M",col.axis="grey")
-    plot(s$V5~s$t,type="l",xlim=c(t0,t1),ylim=c(min(s$V5[s$t>t0]),max(s$V5[s$t>t0])),ylab="humidity (%Rh)",xaxt="n");
+    plot(s$V5~s$t,type="l",xlim=c(t0,t1),ylim=c(40,55),ylab="humidity (%Rh)",xaxt="n")
+    abline(h=50,col="grey",lty=3)
     #missed timestamps
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
-    plot(s$V6~s$t,type="l",xlim=c(t0,t1),ylab="light",xaxt="n");
+    plot(s$V6~s$t,type="l",xlim=c(t0,t1),ylim=c(0,max(s$V6[s$t>t0])),ylab="light",xaxt="n");
     rug(s$V2[s$V3 == 0 & s$V2 > t0],ticksize=0.1,col="blue")
     #add sunrise and sunset
     sunrise <- sunriset(matrix(c(long,lat), nrow = 1),as.POSIXct(t1,origin="1970-01-01",tz=tz),direction = "sunrise",POSIXct.out = TRUE)
@@ -234,7 +235,7 @@ plotqs <- function (days=1) {
     plot(w$gas ~ w$t,type="l",xlim=c(t0,t1),ylim=c(min(w$gas[w$t > t0]),max(w$gas[w$t > t0])),ylab="VOCs (mV)",xaxt="n")
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
-    plot(w$light ~ w$t,type="l",ylab="light (mV)",xlim=c(t0,t1))
+    plot(w$light ~ w$t,type="l",ylim=c(0,max(w$light[w$t>t0])),ylab="light (mV)",xlim=c(t0,t1))
     axis.POSIXct(1, at=seq(t0,t1,by="hour"),format="%H:%M",col.axis="grey")
     circadian(t0,t1)
     abline(v=w$t[w$tea > 0 & w$t > t0],col="green")
