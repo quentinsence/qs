@@ -53,7 +53,7 @@ s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
 d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
 
 g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
-w$t <- as.POSIXct(w$time+3600,origin="1970-01-01",tz=tz)
+w$t <- as.POSIXct(w$time+0*3600,origin="1970-01-01",tz=tz)
 
 #time between each entry
 s$dt <- c(0,diff(s$V2))
@@ -76,8 +76,8 @@ w$time24 <- (w$time+0*3600) %% 86400
 w$weekday <- format.POSIXct(w$t,format="%w")
 sweekday <- c('Sun','Mon','Tue','Wed','Thu','Fri','Sat')
 
-#remove tea cups before 7:30am = artefacts, morning cleaners are disrupting sensors
-w$tea[w$time24 < 7.5*3600] <- 0
+#remove tea cups before 7:30am or after 6pm = artefacts, cleaners may disrupt sensors
+w$tea[w$time24 < 7.5*3600 && w$time24 > 18*3600] <- 0
 
 #boundaries to display only the last 24 hours * days
 t0 <- w$t[1]
