@@ -230,6 +230,7 @@ plotqs <- function (days=1) {
     ## dust sensor + voc TGS2602 in blue, coming from arduino
     plot(d$V3~d$t,type="l",xlim=c(t0,t1),ylim=c(0,2000),ylab="dust (mV)",xaxt="n",col="gray")
     lines(lowess(d$V3[d$t > t0]~d$t[d$t > t0],f=0.01),lwd=2,col="blue")
+    abline(h=800,lty=3)
     axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M")
     #axis.POSIXct(1, at=seq(as.POSIXct(t0,origin="1970-01-01",tz=tz),as.POSIXct(t1,origin="1970-01-01",tz=tz),3600),format="%H:%M",col.axis="grey")
     #format.POSIXct(cat(as.POSIXct(s$V2[length(s$V2)],origin="1970-01-01",tz=tz)),format="%c")
