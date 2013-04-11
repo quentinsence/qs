@@ -48,12 +48,13 @@ d <- na.omit(d)
 
 names(s) <- c('V2','V3','V4','V5','V6','V7','V8','V9','V10')
 
-#stored as UTC, change to local timezone tz
-s$t <- as.POSIXct(s$V2,origin="1970-01-01",tz=tz)
-d$t <- as.POSIXct(d$V1,origin="1970-01-01",tz=tz)    
+s$V2 <- s$V2 - 3600
+#stored as UTC, change to local timezone tz defined in local.r
+s$t <- as.POSIXct(as.POSIXlt(s$V2,origin="1970-01-01",tz=tz))
+d$t <- as.POSIXct(as.POSIXlt(d$V1,origin="1970-01-01",tz=tz))
 
-g$t <- as.POSIXct(g$V1+3600,origin="1970-01-01",tz=tz)  
-w$t <- as.POSIXct(w$time+0*3600,origin="1970-01-01",tz=tz)
+g$t <- as.POSIXct(as.POSIXlt(g$V1,origin="1970-01-01",tz=tz))
+w$t <- as.POSIXct(as.POSIXlt(w$time,origin="1970-01-01",tz=tz))
 
 #time between each entry
 s$dt <- c(0,diff(s$V2))
@@ -62,10 +63,6 @@ s$dl <- c(rep(0,2),diff(s$V6,lag=2))
 
 s$t24 <- s$V2 %% 86400
 ttb <- subset(s,dl< -300)
-
-#adjust for arduino clock inaccuracies, both feeds were picked at the same time so last timestamp should be identical in both feeds
-d$t <- d$t + s$V2[length(s$V2)] - d$V1[length(d$V1)]
-
 
 #drop IP address, only 1 user/collection point for now
 w$ip <- NULL
@@ -192,9 +189,9 @@ plotqs <- function (days=1) {
     
     chans <- 10
     #if we have KCL pollution data less than 1/2 day old then display it too
-    if(k$date[length(k$date)] > t1 - 86400/2) {
-      chans <- chans + 2
-    }
+    #if(k$date[length(k$date)] > t1 - 86400/2) {
+    #  chans <- chans + 2
+    #}
     #plot radiation only if rare event detected
     if( max(g$V2[g$t > t0]) > 35 )  {
       chans <- chans + 1
